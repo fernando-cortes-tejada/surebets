@@ -2,53 +2,54 @@ from app.utils import initiate_browser, close_session
 from app.teapuesto.entities import NBA_URL
 from app.teapuesto import utils
 
-from playwright.sync_api import Page, Browser, Playwright
+from playwright.sync_api import Page
 from playwright.sync_api import Locator
 
 
 def scrape() -> list[dict]:
-    info = []
+    try:
+        info = []
 
-    page, browser, playwright = initiate_browser(headless=False)
-    page.goto(NBA_URL)
-
-    games = utils.get_game_list(page)
-
-    if games is None:
-        close_session(browser, playwright)
-        return info
-
-    for i, game in enumerate(games):
-        info = handle_game(page, game, info)
-
-        print(f"{i} of {len(games)-1}")
-
-        if i == len(games) - 1:
-            print("break")
-            break
-
-        print("clicking back")
+        page, browser, playwright = initiate_browser(headless=False)
         page.goto(NBA_URL)
-        game_list_visible = utils.wait_game_list_visible(page)
-        if not game_list_visible:
-            break
 
-    print("Done!")
+        games = utils.get_game_list(page)
 
-    close_session(browser, playwright)
+        if not games:
+            close_session(browser, playwright)
+            return info
+
+        for game in games[:-1]:
+            info.extend(handle_game(page, game))
+
+            page.reload()
+            game_list_visible = utils.wait_game_list_visible(page)
+            if not game_list_visible:
+                break
+
+        # handle the last game without reloading the page
+        info.extend(handle_game(page, games[-1]))
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    finally:
+        close_session(browser, playwright)
+
     return info
 
 
-def handle_game(page: Page, game: Locator, info: list[dict]) -> list[dict]:
+def handle_game(page: Page, game: Locator) -> list[dict]:
     game.click()
 
+    info = []
+
+    # if the page is not loaded, return the info that we have
     if not utils.check_game_page(page):
         return info
 
     game_name = page.locator(".team-name").text_content()
     carousels = utils.get_carousels(page)
-
-    print(game_name)
 
     for carousel in carousels:
         if "Apuestas Generales" not in carousel.text_content():
