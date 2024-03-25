@@ -49,6 +49,7 @@ def handle_game(page: Page, game: Locator) -> list[dict]:
         return info
 
     game_name = page.locator(".team-name").text_content()
+    teams = game_name.lower().split(" vs ")
     carousels = utils.get_carousels(page)
 
     for carousel in carousels:
@@ -61,7 +62,7 @@ def handle_game(page: Page, game: Locator) -> list[dict]:
             continue
 
         for market in markets:
-            info.extend(utils.get_info(market, game_name))
+            info.extend(utils.get_info(market, game_name, teams))
 
     return info
 

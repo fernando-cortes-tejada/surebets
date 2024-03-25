@@ -72,7 +72,7 @@ def get_markets(page: Page) -> list[str]:
     return markets
 
 
-def get_info(string: str, game_name: str) -> list[dict]:
+def get_info(string: str, game_name: str, teams: list[str]) -> list[dict]:
     info = []
 
     string_list = string.split("\n")
@@ -82,30 +82,34 @@ def get_info(string: str, game_name: str) -> list[dict]:
 
     match market:
         case "Ganador":
-            info.extend(info_winner(game_name, string_list))
+            info.extend(info_winner(game_name, teams, string_list))
         case "Total":
             info.append(info_total(game_name, string_list))
         case "Hándicap":
-            info.append(info_handicap(game_name, string_list))
+            info.append(info_handicap(game_name, teams, string_list))
         case "1 total" | "home total" | "Local total":
-            info.append(info_total_team(game_name, string_list))
+            info.append(info_total_team(game_name, teams[0], string_list))
         case "2 total" | "away total" | "Visitante total":
-            info.append(info_total_team(game_name, string_list))
+            info.append(info_total_team(game_name, teams[1], string_list))
         case "1º Mitad - hándicap":
-            info.append(info_handicap(game_name, string_list, "handicap_first_half"))
+            info.append(
+                info_handicap(game_name, teams, string_list, "handicap_first_half")
+            )
         case "1st half - total":
             info.append(info_total(game_name, string_list, "total_first_half"))
         case "1er cuarto - hándicap":
-            info.append(info_handicap(game_name, string_list, "handicap_first_quarter"))
+            info.append(
+                info_handicap(game_name, teams, string_list, "handicap_first_quarter")
+            )
         case "2do cuarto - hándicap":
             info.append(
-                info_handicap(game_name, string_list, "handicap_second_quarter")
+                info_handicap(game_name, teams, string_list, "handicap_second_quarter")
             )
 
     return info
 
 
-def info_winner(game_name: str, string_list: list[str]) -> list[dict]:
+def info_winner(game_name: str, teams: list[str], string_list: list[str]) -> list[dict]:
     info = []
     string_list = string_list[1:]
     for i in range(2):
@@ -115,6 +119,7 @@ def info_winner(game_name: str, string_list: list[str]) -> list[dict]:
                 "website": "teapuesto",
                 "game": game_name,
                 "market": "winner",
+                "team": teams[i],
                 "more": float(data_),
             }
         )
@@ -138,7 +143,7 @@ def info_total(game_name: str, string_list: list[str], market: str = "total") ->
 
 
 def info_handicap(
-    game_name: str, string_list: list[str], market: str = "handical"
+    game_name: str, teams: list[str], string_list: list[str], market: str = "handicap"
 ) -> dict:
     string_list = string_list[1:]
 
@@ -146,6 +151,7 @@ def info_handicap(
         "website": "teapuesto",
         "game": game_name,
         "market": market,
+        "team": teams[0],
         "line": float(string_list[0].split(" ")[-1].replace("(", "").replace(")", "")),
         "more": float(string_list[1]),
         "less": float(string_list[3]),
@@ -154,13 +160,14 @@ def info_handicap(
     return info
 
 
-def info_total_team(game_name: str, string_list: list[str]) -> dict:
+def info_total_team(game_name: str, team: str, string_list: list[str]) -> dict:
     string_list = string_list[1:]
 
     info = {
         "website": "teapuesto",
         "game": game_name,
         "market": "total_team",
+        "team": team,
         "line": float(string_list[0].split(" ")[-1]),
         "more": float(string_list[1]),
         "less": float(string_list[3]),
