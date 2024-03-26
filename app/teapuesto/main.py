@@ -48,8 +48,8 @@ def handle_game(page: Page, game: Locator) -> list[dict]:
     if not utils.check_game_page(page):
         return info
 
-    game_name = page.locator(".team-name").text_content()
-    teams = game_name.lower().split(" vs ")
+    game_name = page.locator(".team-name").text_content().strip().lower()
+    teams = game_name.split(" vs ")
     carousels = utils.get_carousels(page)
 
     for carousel in carousels:
@@ -65,6 +65,3 @@ def handle_game(page: Page, game: Locator) -> list[dict]:
             info.extend(utils.get_info(market, game_name, teams))
 
     return info
-
-
-info = scrape()
