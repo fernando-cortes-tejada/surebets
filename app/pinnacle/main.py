@@ -16,8 +16,6 @@ def scrape() -> list[dict]:
         game_list = utils.get_game_list(page)
         games = utils.get_games_url(game_list)
 
-        close_session(browser, playwright)
-
         if not games:
             close_session(browser, playwright)
             return info
